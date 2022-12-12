@@ -1,75 +1,105 @@
 package org.telran.library.project.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.telran.library.project.model.User;
-import org.telran.library.project.service.*;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.telran.library.project.model.Book;
+import org.telran.library.project.service.BookService;
+import org.telran.library.project.service.OrderService;
 
+import java.util.List;
 import java.util.Scanner;
-@org.springframework.stereotype.Controller
+@Controller
 public class UserController {
-
+    /*
+    Запрашивает у пользователя ввод идентификатора книги что пользователь хочет себе взять(или вернуть)
+    После ввода убирает книгу из библиотеки и помещает ее в хранилище к пользователю.
+    (или наоборот от пользователя в библиотеку)
+    Данный функционал должен быть запущен постоянно, те пользователь постоянно может выбирать различные действия
+    и тусовать книги в разные стороны.
+    */
     @Autowired
-    UserService userService;
-
+    private BookService bookService;
     @Autowired
-    BookService bookService;
+    private OrderService orderService;
 
-    @Autowired
-    OrderService orderService;
-
-    @Autowired
-    Controller controller;
-
-    public void logIn (){
-        System.out.println("Введите id пользователя");
-        Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        int id = Integer.parseInt(String.valueOf(input));
-        User user = userService.userLogIn(id);
-        orderService.setUser(user);
-        orderService.setHomeRepository();
-        controller.menu();
+    public void showAllFromBooksRepository(){
+        List<Book> allFromBooksRepository = bookService.getAllFromBooksRepository();
+        allFromBooksRepository.forEach(System.out::println);
     }
 
-    private void showAllUsers(){
-        userService.showAllUsers();
+    public void showAllFromHomeRepository(){
+        List<Book> allFromHomeRepository = orderService.getAllFromHomeRepository();
+        allFromHomeRepository.forEach(System.out::println);
+
     }
 
-    private void saveAndExit(){
-        userService.writeUserListToJson();
-        bookService.writeBookRepositoryToJson();
+    public void getFromBooksRepositoryToHomeRepository(Book book){
+        bookService.deleteFromBooksRepository(book);
+        orderService.addBookToHomeRepository(book);
+
     }
 
-    private int mainFirstMenu (){
-        System.out.println("\n<---    ГЛАВНОЕ МЕНЮ    ---> \n" +
-                "1 - показать список пользователей\n" +
-                "2 - войти в систему\n" +
-                "3 - сохранить изменения и выйти\n" +
-                "0 - выйти из системы без сохранения");
-        Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        return Integer.parseInt(String.valueOf(input.charAt(0)));
+    public void putToBooksRepositoryFromHomeRepository(Book book){
+        orderService.deleteBookFormHomeRepository(book);
+        bookService.addToBookRepository(book);
     }
 
-    public void menu () {
-        int choise = mainFirstMenu();
-        while (choise != 0) {
-            switch (choise) {
+
+
+    public void menu(){
+        int choise = showTopMenu();
+        while (choise!=0){
+            switch (choise){
                 case 1: {
-                    showAllUsers();
+                    showAllFromBooksRepository();
+                    System.out.println("\n");
                     break;
                 }
                 case 2: {
-                    logIn();
+                    showAllFromHomeRepository();
+                    System.out.println("\n");
                     break;
                 }
-                case 3:{
-                    saveAndExit();
-                    System.exit(0);
+                case 3: {
+                    showAllFromBooksRepository();
+                    int isbn = showBookMenu();
+                    Book book = bookService.findBook(isbn);
+                    getFromBooksRepositoryToHomeRepository(book);
+                    System.out.println("\n");
+                    break;
+                }
+                case 4: {
+                    showAllFromHomeRepository();
+                    int isbn = showBookMenu();
+                    Book book = orderService.findUsersBook(isbn);
+                    putToBooksRepositoryFromHomeRepository(book);
+                    System.out.println("\n");
+                    break;
                 }
             }
-            choise = mainFirstMenu();
-        }
+            choise = showTopMenu();
+       }
+    }
+
+    private int showTopMenu(){
+        System.out.println("выберите действие: ");
+        System.out.println("1 - показать все книги в библиотеке\n" +
+                "2 - показать все книги у читателя\n" +
+                "3 - выбрать книгу из библиотеки\n" +
+                "4 - сдать книгу в библиотеку\n" +
+                "0 - вернуться в главное меню\n");
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        return Integer.parseInt(String.valueOf(input.charAt(0)));
+
+    }
+
+    private int showBookMenu(){
+        System.out.println("\nВведите ISBN номер книги: \n");
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        return Integer.parseInt(String.valueOf(input));
     }
 
 

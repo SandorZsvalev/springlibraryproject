@@ -8,7 +8,7 @@ public interface UserRepository {
 
     List<User> getUsersList();
 
-    public List<User> readUsersFromJson();
+    List<User> readUsersFromJson();
 
     void writeUserListToJson();
 }
